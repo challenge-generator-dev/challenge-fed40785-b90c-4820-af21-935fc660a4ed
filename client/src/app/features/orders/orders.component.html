@@ -1,0 +1,111 @@
+<div class="orders-container">
+  <header class="orders-header">
+    <h1 class="orders-header__title">Panel de Órdenes</h1>
+    <p class="orders-header__subtitle">Seguimiento en tiempo real del estado de tus órdenes</p>
+  </header>
+
+  @if (error) {
+    <div class="orders-error" role="alert">
+      <svg class="orders-error__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="orders-error__content">
+        <p class="orders-error__message">{{ error }}</p>
+        <button class="orders-error__retry" (click)="loadInitialData()">Reintentar</button>
+      </div>
+    </div>
+  }
+
+  <section class="orders-section" aria-label="Lista de órdenes">
+    @if (orders.length === 0 && !error) {
+      <div class="orders-empty">
+        <svg class="orders-empty__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        <p class="orders-empty__text">No hay órdenes disponibles en este momento</p>
+        <p class="orders-empty__hint">Los eventos de órdenes aparecerán aquí automáticamente</p>
+      </div>
+    } @else {
+      <div class="orders-list">
+        @for (order of orders; track order.id) {
+          <article class="order-card" (click)="viewOrderHistory(order.id)" tabindex="0" role="button" aria-label="Ver historial de orden {{ order.id }}">
+            <div class="order-card__header">
+              <h2 class="order-card__id">
+                <span class="order-card__label">Orden</span>
+                <span class="order-card__value">#{{ order.id }}</span>
+              </h2>
+              <app-order-status-badge [status]="order.status" class="order-card__badge"></app-order-status-badge>
+            </div>
+            <div class="order-card__body">
+              <div class="order-card__info">
+                <time class="order-card__timestamp" [attr.datetime]="order.timestamp.toISOString()">
+                  {{ order.timestamp | date:'medium' }}
+                </time>
+                @if (order.events.length > 0) {
+                  <span class="order-card__events">
+                    <svg class="order-card__events-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                    </svg>
+                    {{ order.events.length }} evento{{ order.events.length !== 1 ? 's' : '' }}
+                  </span>
+                }
+              </div>
+              @if (order.metadata && (order.metadata['customerName'] || order.metadata['total'])) {
+                <dl class="order-card__metadata">
+                  @if (order.metadata['customerName']) {
+                    <div class="order-card__meta-item">
+                      <dt class="order-card__meta-label">Cliente</dt>
+                      <dd class="order-card__meta-value">{{ order.metadata['customerName'] }}</dd>
+                    </div>
+                  }
+                  @if (order.metadata['total']) {
+                    <div class="order-card__meta-item">
+                      <dt class="order-card__meta-label">Total</dt>
+                      <dd class="order-card__meta-value">{{ order.metadata['total'] | currency }}</dd>
+                    </div>
+                  }
+                </dl>
+              }
+            </div>
+            <div class="order-card__footer">
+              <span class="order-card__cta">Ver historial completo</span>
+              <svg class="order-card__arrow" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              </svg>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <aside class="orders-stats" aria-label="Estadísticas de órdenes">
+    <h3 class="orders-stats__title">Resumen</h3>
+    <dl class="orders-stats__list">
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">Total de órdenes</dt>
+        <dd class="orders-stats__value">{{ orders.length }}</dd>
+      </div>
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">Pendientes</dt>
+        <dd class="orders-stats__value">{{ orders | filterStatus:'pending' }}</dd>
+      </div>
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">En proceso</dt>
+        <dd class="orders-stats__value">{{ orders | filterStatus:'processing' }}</dd>
+      </div>
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">Enviadas</dt>
+        <dd class="orders-stats__value">{{ orders | filterStatus:'shipped' }}</dd>
+      </div>
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">Entregadas</dt>
+        <dd class="orders-stats__value">{{ orders | filterStatus:'delivered' }}</dd>
+      </div>
+      <div class="orders-stats__item">
+        <dt class="orders-stats__label">Canceladas</dt>
+        <dd class="orders-stats__value">{{ orders | filterStatus:'cancelled' }}</dd>
+      </div>
+    </dl>
+  </aside>
+</div>
